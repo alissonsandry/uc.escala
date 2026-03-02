@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Escala de Fim de Semana - Versão Final Estável</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .modal { transition: opacity 0.3s ease; }
+        .modal-content { transition: transform 0.3s ease; }
+        
+        .calendar-grid {
+            display: grid !important;
+            grid-template-columns: repeat(7, 1fr) !important;
+            gap: 8px;
+        }
+
+        @media print {
+            @page { size: A4 landscape; margin: 0.5cm; }
+            body, html { height: 100%; margin: 0; padding: 0; background-color: #fff !important; }
+            .no-print { display: none !important; }
+            #main-app-content, .container, #calendar-print-area { height: 100% !important; max-width: 100% !important; padding: 0 !important; margin: 0 !important; border: none !important; box-shadow: none !important; }
+            .month-container { page-break-after: always; height: 98vh; display: flex; flex-direction: column; padding: 10px; box-sizing: border-box; }
+            .calendar-grid { display: grid !important; grid-template-columns: repeat(7, 1fr) !important; flex-grow: 1; gap: 4px !important; }
+            .calendar-day, .weekday-day { border: 1px solid #cbd5e1 !important; border-radius: 0.5rem !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-200 text-slate-900">
+
+    <div id="login-screen" class="fixed inset-0 bg-slate-200 flex items-center justify-center z-[100] no-print">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm border-2 border-slate-300">
+            <h2 class="text-2xl font-bold text-center text-slate-800 mb-6">Acesso à Escala</h2>
+            <form id="login-form">
+                <div class="mb-4 text-left">
+                    <label class="block text-sm font-medium mb-1">Usuário</label>
+                    <input type="text" id="username" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div class="mb-6 text-left">
+                    <label class="block text-sm font-medium mb-1">Senha</label>
+                    <input type="password" id="password" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition shadow-lg">Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="main-app-content" class="hidden">
+        <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
+            <header class="mb-8 no-print flex flex-col sm:flex-row sm:items-start sm:justify-between">
+                <div class="text-center sm:text-left">
+                    <h1 class="text-3xl sm:text-4xl font-bold text-slate-900">Gerador de Escala</h1>
+                    <p class="text-slate-700 mt-2">Dados salvos automaticamente no navegador.</p>
+                </div>
+                <div class="flex gap-2 justify-center sm:justify-end mt-4 sm:mt-0 flex-wrap items-center">
+                    <button id="clear-all-button" class="bg-orange-700 text-white font-bold py-2 px-4 rounded-lg text-xs shadow hover:bg-orange-800">Limpar Tudo</button>
+                    <button id="logout-button" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow">Sair</button>
+                    <button id="change-password-button" class="bg-yellow-500 text-white font-bold py-2 px-4 rounded-lg text-xs shadow">Senha</button>
+                    <button id="history-button" class="bg-purple-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow">Histórico</button>
+                    <button id="import-button" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow">Importar</button>
+                    <button id="export-button" class="bg-teal-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow">Exportar</button>
+                    <button id="edit-teams-button" class="bg-slate-400 text-white font-bold py-2 px-4 rounded-lg text-xs shadow hover:bg-slate-500">Duplas</button>
+                </div>
+            </header>
+
+            <input type="file" id="import-file-input" accept="application/json" class="hidden no-print">
+
+            <div id="controls-section" class="bg-white p-6 rounded-2xl shadow-xl border border-slate-300 mb-8 flex flex-col sm:flex-row gap-4 items-center no-print">
+                <div class="flex-1 w-full"><label class="block text-sm font-medium mb-1">Mês Início</label><select id="startMonth" class="w-full p-3 border rounded-lg"></select></div>
+                <div class="flex-1 w-full"><label class="block text-sm font-medium mb-1">Mês Fim</label><select id="endMonth" class="w-full p-3 border rounded-lg"></select></div>
+                <div class="flex-1 w-full"><label class="block text-sm font-medium mb-1">Ano</label><select id="year" class="w-full p-3 border rounded-lg"></select></div>
+                <div class="flex flex-col gap-2">
+                    <div class="flex gap-2">
+                        <button id="generateButton" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg">Gerar Escala</button>
+                        <button id="printButton" class="bg-green-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg">Imprimir</button>
+                    </div>
+                    <label class="text-xs font-medium flex items-center"><input id="clearDataCheckbox" type="checkbox" class="mr-2"> Limpar antes de gerar</label>
+                </div>
+            </div>
+
+            <div id="swap-info" class="hidden bg-blue-100 border-l-4 border-blue-500 p-4 rounded-lg mb-8 no-print"><p id="swap-message" class="font-bold text-blue-800"></p><button id="cancelSwapButton" class="mt-2 bg-red-500 text-white py-1 px-3 rounded-lg text-sm">Cancelar Troca</button></div>
+
+            <div id="calendar-print-area" class="bg-white p-6 rounded-2xl shadow-xl border border-slate-300">
+                <div id="calendar-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="day-action-modal" class="modal fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-[70] no-print">
+        <div class="modal-content bg-white p-6 rounded-2xl w-full max-w-sm text-center border-2 border-slate-300">
+            <h3 id="day-action-modal-date" class="text-lg font-bold mb-4"></h3>
+            <div class="space-y-3">
+                <button id="action-swap-button" class="w-full bg-blue-500 text-white py-3 rounded-lg font-bold shadow">Trocar Plantão</button>
+                <button id="action-add-member-button" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold shadow">Adicionar Colaborador</button>
+                <button id="action-replace-team-button" class="w-full bg-purple-500 text-white py-3 rounded-lg font-bold shadow">Substituir Dupla</button>
+                <button id="action-remove-member-button" class="w-full bg-red-500 text-white py-3 rounded-lg font-bold shadow">Remover Colaborador</button>
+                <button id="action-mark-event-button" class="w-full bg-orange-500 text-white py-3 rounded-lg font-bold shadow">Marcar Evento</button>
+            </div>
+            <button onclick="closeModal('day-action-modal')" class="mt-6 w-full bg-slate-200 py-2 rounded-lg font-bold">Fechar</button>
+        </div>
+    </div>
+
+    <div id="edit-teams-modal" class="modal fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-[90] no-print">
+        <div class="modal-content bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md text-center border border-slate-200">
+            <h3 class="text-2xl font-bold text-slate-800 mb-2">Editar Duplas</h3>
+            <textarea id="teams-textarea" class="w-full h-48 p-4 border rounded-xl mb-6 font-medium text-slate-700"></textarea>
+            <div class="flex gap-4">
+                <button onclick="closeModal('edit-teams-modal')" class="w-full bg-slate-100 py-3 rounded-xl">Cancelar</button>
+                <button id="edit-teams-save" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="selection-modal" class="modal fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-[80] no-print">
+        <div class="modal-content bg-white p-6 rounded-2xl w-full max-w-md border-2 border-slate-300">
+            <h3 id="selection-title" class="font-bold mb-4 text-center"></h3>
+            <div id="selection-list" class="space-y-2 max-h-60 overflow-y-auto mb-4 p-1"></div>
+            <button onclick="closeModal('selection-modal')" class="w-full bg-slate-200 py-2 rounded-lg">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="mark-event-modal" class="modal fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-[80] no-print">
+        <div class="modal-content bg-white p-6 rounded-2xl w-full max-w-md border-2 border-slate-300 text-center">
+            <h3 class="font-bold mb-2">Eventos do Dia</h3>
+            <div id="event-list-container" class="space-y-2 mb-4 border p-2 rounded max-h-40 overflow-y-auto bg-slate-50 text-left"></div>
+            <div class="flex gap-2">
+                <input type="text" id="event-text-input" class="flex-1 p-2 border rounded" placeholder="Novo evento">
+                <button id="add-event-button" class="bg-green-600 text-white px-4 rounded font-bold shadow">Add</button>
+            </div>
+            <button onclick="closeModal('mark-event-modal')" class="mt-4 w-full bg-slate-200 py-2 rounded font-bold">Fechar</button>
+        </div>
+    </div>
+
+    <div id="history-modal" class="modal fixed inset-0 bg-black/60 flex items-center justify-center p-4 hidden z-[100] no-print">
+        <div class="modal-content bg-white rounded-2xl p-6 w-full max-w-2xl border-2 border-slate-300 flex flex-col max-h-[80vh]">
+            <h3 class="font-bold text-xl mb-4 text-center">Histórico de Alterações</h3>
+            <div id="history-list" class="overflow-y-auto space-y-2 border-t pt-2"></div>
+            <button onclick="closeModal('history-modal')" class="mt-4 bg-slate-200 py-2 rounded-lg font-bold">Fechar</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            let teams = [], schedule = {}, scheduleHistory = [], holidays = [], users = { admin: 'admin123' };
+            let currentSelectedDate = null, swapState = { mode: null, firstDate: null };
+
+            function init() {
+                loadState();
+                populateSelectors();
+                addEventListeners();
+                // Força a renderização se houver dados salvos
+                if (schedule && Object.keys(schedule).length > 0) {
+                    renderCalendars();
+                }
+            }
+
+            function loadState() {
+                teams = JSON.parse(localStorage.getItem('scheduleAppTeams') || '["Arthur Gabriel - Levy Silva", "André Luiz - William Rendeson", "Pedro Lemos - Artur Loiola", "Diego Lima - Eduardo Oliveira"]');
+                schedule = JSON.parse(localStorage.getItem('scheduleAppSchedule') || '{}');
+                scheduleHistory = JSON.parse(localStorage.getItem('scheduleAppHistory') || []);
+                users = JSON.parse(localStorage.getItem('scheduleAppUsers') || '{"admin": "admin123"}');
+            }
+
+            function saveState() {
+                localStorage.setItem('scheduleAppTeams', JSON.stringify(teams));
+                localStorage.setItem('scheduleAppSchedule', JSON.stringify(schedule));
+                localStorage.setItem('scheduleAppHistory', JSON.stringify(scheduleHistory));
+                localStorage.setItem('scheduleAppUsers', JSON.stringify(users));
+            }
+
+            function addToHistory(action, desc) {
+                scheduleHistory.unshift({ date: new Date().toLocaleString('pt-BR'), action, desc });
+                saveState();
+            }
+
+            function populateSelectors() {
+                const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+                months.forEach((m, i) => { 
+                    document.getElementById('startMonth').add(new Option(m, i)); 
+                    document.getElementById('endMonth').add(new Option(m, i)); 
+                });
+                const yr = new Date().getFullYear();
+                for (let y = yr - 1; y <= yr + 2; y++) document.getElementById('year').add(new Option(y, y));
+                document.getElementById('year').value = yr;
+                
+                // Tenta recuperar os meses selecionados anteriormente se houver dados
+                if (Object.keys(schedule).length > 0) {
+                    const dates = Object.keys(schedule).sort();
+                    const first = new Date(dates[0]);
+                    const last = new Date(dates[dates.length - 1]);
+                    document.getElementById('startMonth').value = first.getMonth();
+                    document.getElementById('endMonth').value = last.getMonth();
+                    document.getElementById('year').value = first.getFullYear();
+                }
+            }
+
+            async function generateSchedule() {
+                const startM = parseInt(document.getElementById('startMonth').value);
+                const endM = parseInt(document.getElementById('endMonth').value);
+                const yr = parseInt(document.getElementById('year').value);
+                
+                if (document.getElementById('clearDataCheckbox').checked) { 
+                    schedule = {}; 
+                    scheduleHistory = []; 
+                }
+                
+                await fetchHolidays(yr);
+                const dates = [];
+                for (let m = startM; m <= endM; m++) {
+                    const days = new Date(yr, m + 1, 0).getDate();
+                    for (let d = 1; d <= days; d++) dates.push(new Date(yr, m, d));
+                }
+
+                dates.forEach(d => {
+                    const s = formatDate(d);
+                    const h = holidays.find(f => f.date === s);
+                    if (schedule[s]) delete schedule[s].team;
+                    if (h) schedule[s] = { ...(schedule[s] || {}), isHoliday: true, name: h.name };
+                });
+
+                const dutyDays = dates.filter(d => (d.getDay() === 0 || d.getDay() === 6) && !holidays.find(h => h.date === formatDate(d)));
+                let idx = 0;
+                dutyDays.forEach(curDate => {
+                    const dateStr = formatDate(curDate);
+                    const forbidden = new Set();
+                    for (let i = 1; i <= 8; i++) {
+                        const checkD = new Date(curDate);
+                        checkD.setDate(checkD.getDate() - i);
+                        const past = (schedule[formatDate(checkD)]?.team || []).join(' - ');
+                        if (past) forbidden.add(past);
+                    }
+                    let assigned = false;
+                    for (let a = 0; a < teams.length; a++) {
+                        const cand = teams[idx];
+                        if (!forbidden.has(cand)) {
+                            schedule[dateStr] = { ...(schedule[dateStr] || {}), team: cand.split(' - ') };
+                            assigned = true; idx = (idx + 1) % teams.length; break;
+                        }
+                        idx = (idx + 1) % teams.length;
+                    }
+                    if (!assigned) { schedule[dateStr] = { ...(schedule[dateStr] || {}), team: teams[idx].split(' - ') }; idx = (idx + 1) % teams.length; }
+                });
+                addToHistory("Geração", "Escala automática gerada."); 
+                saveState(); 
+                renderCalendars();
+            }
+
+            function renderCalendars() {
+                const cont = document.getElementById('calendar-container'); cont.innerHTML = '';
+                const startM = parseInt(document.getElementById('startMonth').value);
+                const endM = parseInt(document.getElementById('endMonth').value);
+                const yr = parseInt(document.getElementById('year').value);
+
+                for (let m = startM; m <= endM; m++) {
+                    const mDiv = document.createElement('div'); mDiv.className = 'month-container';
+                    const monthName = document.getElementById('startMonth').options[m].text;
+                    mDiv.innerHTML = `<h2 class="calendar-title font-bold text-center text-slate-800 mb-6 uppercase">Escala de ${monthName} de ${yr}</h2>`;
+                    
+                    const grid = document.createElement('div');
+                    grid.className = 'calendar-grid';
+                    ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach(d => grid.innerHTML += `<div class="font-bold text-center text-slate-600 p-2 uppercase text-xs">${d}</div>`);
+
+                    const firstDay = new Date(yr, m, 1).getDay();
+                    const totalDays = new Date(yr, m + 1, 0).getDate();
+                    for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
+
+                    for (let d = 1; d <= totalDays; d++) {
+                        const ds = `${yr}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                        const info = schedule[ds];
+                        const cell = document.createElement('div');
+                        cell.className = `calendar-day border-2 border-slate-300 rounded-lg p-2 min-h-[110px] flex flex-col cursor-pointer hover:border-blue-500 shadow-sm ${info?.isHoliday ? 'bg-green-50 border-green-400' : ''}`;
+                        cell.onclick = () => handleDayClick(ds);
+                        
+                        let html = `<div class="text-center font-bold text-blue-600 text-lg">${d}</div>`;
+                        if (info?.events) info.events.forEach(e => html += `<div class="bg-orange-100 text-orange-800 text-[10px] px-1 rounded mb-1 truncate border-l-2 border-orange-400 font-medium">${e}</div>`);
+                        if (info?.team) html += `<div class="mt-auto text-center bg-slate-100 p-1 rounded-md border-t-2 border-slate-200 text-[11px] font-semibold">${info.team.join('<br>')}</div>`;
+                        else if (info?.isHoliday) html += `<div class="mt-auto text-center bg-green-200 text-green-800 p-1 rounded-md text-[10px] font-bold">FERIADO<br>${info.name}</div>`;
+                        
+                        cell.innerHTML = html; grid.appendChild(cell);
+                    }
+                    mDiv.appendChild(grid); cont.appendChild(mDiv);
+                }
+            }
+
+            function handleDayClick(ds) {
+                currentSelectedDate = ds;
+                if (swapState.mode === 'team') {
+                    const t1 = schedule[swapState.firstDate]?.team, t2 = schedule[ds]?.team;
+                    if (t1 && t2) {
+                        schedule[swapState.firstDate].team = t2; schedule[ds].team = t1;
+                        addToHistory("Troca", `Plantão de ${swapState.firstDate} trocado com ${ds}`);
+                        resetSwap(); saveState(); renderCalendars();
+                    }
+                } else {
+                    document.getElementById('day-action-modal-date').textContent = "Data: " + ds.split('-').reverse().join('/');
+                    openModal('day-action-modal');
+                }
+            }
+
+            function addEventListeners() {
+                document.getElementById('login-form').onsubmit = (e) => {
+                    e.preventDefault();
+                    if (document.getElementById('password').value === users.admin) {
+                        closeModal('login-screen'); 
+                        document.getElementById('main-app-content').classList.remove('hidden'); 
+                        renderCalendars();
+                    } else alert("Senha incorreta");
+                };
+
+                document.getElementById('logout-button').onclick = () => location.reload();
+
+                document.getElementById('clear-all-button').onclick = () => {
+                    if(confirm("ATENÇÃO: Isso apagará permanentemente toda a escala e histórico salvos. Deseja continuar?")) {
+                        schedule = {};
+                        scheduleHistory = [];
+                        saveState();
+                        renderCalendars();
+                        alert("Todos os dados foram limpos.");
+                    }
+                };
+
+                document.getElementById('change-password-button').onclick = () => {
+                    const n = prompt("Nova senha:"); if(n) { users.admin = n; saveState(); alert("Senha alterada!"); }
+                };
+
+                document.getElementById('generateButton').onclick = generateSchedule;
+                document.getElementById('printButton').onclick = () => window.print();
+                
+                document.getElementById('export-button').onclick = () => {
+                    const b = new Blob([JSON.stringify({teams, schedule, scheduleHistory, users})], {type:'application/json'});
+                    const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'backup_escala.json'; a.click();
+                };
+
+                document.getElementById('import-button').onclick = () => document.getElementById('import-file-input').click();
+                document.getElementById('import-file-input').onchange = (e) => {
+                    const fr = new FileReader();
+                    fr.onload = () => { 
+                        try {
+                            const d = JSON.parse(fr.result); 
+                            teams = d.teams || teams; 
+                            schedule = d.schedule || {}; 
+                            scheduleHistory = d.scheduleHistory || [];
+                            saveState(); 
+                            renderCalendars(); 
+                            alert("Backup importado com sucesso!"); 
+                        } catch(err) { alert("Erro ao importar arquivo."); }
+                    };
+                    fr.readAsText(e.target.files[0]);
+                };
+
+                document.getElementById('history-button').onclick = () => {
+                    document.getElementById('history-list').innerHTML = scheduleHistory.map(h => `<div class="text-xs p-2 border-b bg-slate-50"><b>[${h.date}]</b> <i>${h.action}:</i> ${h.desc}</div>`).join('') || "Sem registros.";
+                    openModal('history-modal');
+                };
+
+                document.getElementById('edit-teams-button').onclick = () => {
+                    document.getElementById('teams-textarea').value = teams.join('\n');
+                    openModal('edit-teams-modal');
+                };
+
+                document.getElementById('edit-teams-save').onclick = () => {
+                    teams = document.getElementById('teams-textarea').value.split('\n').filter(t => t.includes('-'));
+                    addToHistory("Equipes", "Lista de duplas editada."); 
+                    saveState(); 
+                    closeModal('edit-teams-modal'); 
+                    renderCalendars();
+                };
+
+                document.getElementById('action-swap-button').onclick = () => {
+                    closeModal('day-action-modal'); swapState = { mode: 'team', firstDate: currentSelectedDate };
+                    document.getElementById('swap-info').classList.remove('hidden'); 
+                    document.getElementById('swap-message').textContent = "Modo Troca Ativado. Clique na data de destino.";
+                };
+
+                document.getElementById('action-add-member-button').onclick = () => {
+                    closeModal('day-action-modal');
+                    const all = [...new Set(teams.flatMap(t => t.split(' - ')))];
+                    document.getElementById('selection-title').textContent = "Adicionar Colaborador";
+                    document.getElementById('selection-list').innerHTML = all.map(c => `<button onclick="confirmAction('add', '${c}')" class="w-full text-left p-3 border rounded hover:bg-green-50 font-bold">＋ ${c}</button>`).join('');
+                    openModal('selection-modal');
+                };
+
+                document.getElementById('action-replace-team-button').onclick = () => {
+                    closeModal('day-action-modal');
+                    document.getElementById('selection-title').textContent = "Substituir Dupla";
+                    document.getElementById('selection-list').innerHTML = teams.map(t => `<button onclick="confirmAction('replace', '${t}')" class="w-full text-left p-3 border rounded hover:bg-purple-50 font-bold">🔁 ${t}</button>`).join('');
+                    openModal('selection-modal');
+                };
+
+                document.getElementById('action-remove-member-button').onclick = () => {
+                    closeModal('day-action-modal');
+                    const cur = schedule[currentSelectedDate]?.team || [];
+                    document.getElementById('selection-title').textContent = "Remover do Plantão";
+                    document.getElementById('selection-list').innerHTML = cur.map(c => `<button onclick="confirmAction('remove', '${c}')" class="w-full text-left p-3 border rounded hover:bg-red-50 text-red-600 font-bold">✖ ${c}</button>`).join('');
+                    openModal('selection-modal');
+                };
+
+                document.getElementById('action-mark-event-button').onclick = () => { 
+                    closeModal('day-action-modal'); 
+                    renderEvents(); 
+                    openModal('mark-event-modal'); 
+                };
+
+                document.getElementById('add-event-button').onclick = () => {
+                    const t = document.getElementById('event-text-input').value; if (!t) return;
+                    if (!schedule[currentSelectedDate]) schedule[currentSelectedDate] = {};
+                    if (!schedule[currentSelectedDate].events) schedule[currentSelectedDate].events = [];
+                    schedule[currentSelectedDate].events.push(t);
+                    addToHistory("Evento", `${t} em ${currentSelectedDate}`); 
+                    document.getElementById('event-text-input').value = ""; 
+                    renderEvents(); 
+                    saveState(); 
+                    renderCalendars();
+                };
+                document.getElementById('cancelSwapButton').onclick = resetSwap;
+            }
+
+            window.confirmAction = (type, val) => {
+                if(!schedule[currentSelectedDate]) schedule[currentSelectedDate] = {};
+                if(type === 'add') { (schedule[currentSelectedDate].team = schedule[currentSelectedDate].team || []).push(val); addToHistory("Adição", `${val} em ${currentSelectedDate}`); }
+                else if(type === 'replace') { schedule[currentSelectedDate].team = val.split(' - '); addToHistory("Substituição", `Novo time em ${currentSelectedDate}: ${val}`); }
+                else if(type === 'remove') { schedule[currentSelectedDate].team = schedule[currentSelectedDate].team.filter(x => x !== val); addToHistory("Remoção", `${val} de ${currentSelectedDate}`); }
+                closeModal('selection-modal'); saveState(); renderCalendars();
+            };
+
+            function renderEvents() {
+                const l = document.getElementById('event-list-container'); l.innerHTML = '';
+                (schedule[currentSelectedDate]?.events || []).forEach((e, i) => {
+                    l.innerHTML += `<div class="flex justify-between bg-white p-2 text-xs border rounded mb-1"><span>${e}</span><button onclick="removeEvent(${i})" class="text-red-500 font-bold">✖</button></div>`;
+                });
+            }
+
+            window.removeEvent = (i) => { schedule[currentSelectedDate].events.splice(i, 1); renderEvents(); saveState(); renderCalendars(); };
+            window.openModal = (id) => { const m = document.getElementById(id); m.classList.remove('hidden'); m.classList.add('flex'); };
+            window.closeModal = (id) => { const m = document.getElementById(id); m.classList.add('hidden'); m.classList.remove('flex'); };
+            function resetSwap() { swapState = { mode: null, firstDate: null }; document.getElementById('swap-info').classList.add('hidden'); }
+            function formatDate(d) { return d.toISOString().split('T')[0]; }
+            
+            async function fetchHolidays(y) {
+                try {
+                    const r = await fetch(`https://brasilapi.com.br/api/feriados/v1/${y}`);
+                    const h = await r.json(); holidays = h.map(x => ({ date: x.date, name: x.name }));
+                    holidays.push({ date: `${y}-03-19`, name: 'São José' }, { date: `${y}-03-25`, name: 'Data Magna CE' });
+                } catch (e) {}
+            }
+            init();
+        });
+    </script>
+</body>
+</html>
