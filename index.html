@@ -30,7 +30,7 @@
             <form id="login-form">
                 <div class="mb-4 text-left">
                     <label class="block text-sm font-medium mb-1">Usuário</label>
-                    <input type="text" id="username" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500" required>
+                    <input type="text" id="username" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500" required placeholder="admin ou tecnico">
                 </div>
                 <div class="mb-6 text-left">
                     <label class="block text-sm font-medium mb-1">Senha</label>
@@ -52,11 +52,15 @@
                     <button id="clear-all-button" class="admin-only bg-orange-700 text-white font-bold py-2 px-4 rounded-lg text-xs shadow hover:bg-orange-800">Limpar Tudo</button>
                     <button id="change-password-button" class="admin-only bg-yellow-500 text-white font-bold py-2 px-4 rounded-lg text-xs shadow">Senha Admin</button>
                     <button id="history-button" class="admin-only bg-purple-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow">Histórico</button>
+                    <button id="import-button" class="admin-only bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow">Importar</button>
+                    <button id="export-button" class="admin-only bg-teal-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow">Exportar</button>
                     <button id="edit-teams-button" class="admin-only bg-slate-400 text-white font-bold py-2 px-4 rounded-lg text-xs shadow hover:bg-slate-500">Duplas</button>
                     <button id="printButton" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow">Imprimir</button>
                     <button id="logout-button" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow">Sair</button>
                 </div>
             </header>
+
+            <input type="file" id="import-file-input" accept="application/json" class="hidden no-print">
 
             <div id="controls-section" class="admin-only bg-white p-6 rounded-2xl shadow-xl border border-slate-300 mb-8 flex flex-col sm:flex-row gap-4 items-center no-print">
                 <div class="flex-1 w-full"><label class="block text-sm font-medium mb-1">Mês Início</label><select id="startMonth" class="w-full p-3 border rounded-lg"></select></div>
@@ -150,7 +154,7 @@
         let teams = ["Arthur Gabriel - Levy Silva", "André Luiz - William Rendeson", "Pedro Lemos - Artur Loiola", "Diego Lima - Eduardo Oliveira"];
         let schedule = {};
         let scheduleHistory = [];
-        let adminPassword = "admin"; // Senha padrão admin
+        let adminPassword = "admin";
         let holidays = [];
         let currentUserRole = null; 
         let currentSelectedDate = null, swapState = { mode: null, firstDate: null };
@@ -158,6 +162,46 @@
         document.addEventListener('DOMContentLoaded', () => {
             populateSelectors();
             setupEventListeners();
+
+            // Reforço no sistema de Login
+            document.getElementById('login-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('login-btn');
+                btn.textContent = "Conectando ao banco...";
+                btn.disabled = true;
+
+                try {
+                    // Força o carregamento da senha salva no Firebase ANTES de checar o login
+                    const snapshot = await get(dbRef);
+                    if (snapshot.exists()) {
+                        const data = snapshot.val();
+                        teams = data.teams || teams;
+                        schedule = data.schedule || {};
+                        scheduleHistory = data.scheduleHistory || [];
+                        adminPassword = data.adminPassword || "admin";
+                    }
+
+                    const u = document.getElementById('username').value.trim();
+                    const p = document.getElementById('password').value.trim();
+
+                    if (u === 'admin' && p === adminPassword) {
+                        currentUserRole = 'admin';
+                        iniciarApp();
+                    } else if (u === 'tecnico' && p === 'UC@tec') {
+                        currentUserRole = 'tecnico';
+                        iniciarApp();
+                    } else {
+                        alert("Usuário ou senha incorretos!");
+                        btn.textContent = "Entrar";
+                        btn.disabled = false;
+                    }
+                } catch (error) {
+                    console.error("Erro no Firebase:", error);
+                    alert("Erro ao conectar. Verifique as Regras de Segurança do Firebase (devem estar .read: true e .write: true).");
+                    btn.textContent = "Entrar";
+                    btn.disabled = false;
+                }
+            });
         });
 
         function populateSelectors() {
@@ -169,22 +213,6 @@
             const yr = new Date().getFullYear();
             for (let y = yr - 1; y <= yr + 2; y++) document.getElementById('year').add(new Option(y, y));
             document.getElementById('year').value = yr;
-        }
-
-        async function carregarDadosFirebase() {
-            try {
-                const snapshot = await get(dbRef);
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
-                    teams = data.teams || teams;
-                    schedule = data.schedule || {};
-                    scheduleHistory = data.scheduleHistory || [];
-                    adminPassword = data.adminPassword || adminPassword;
-                }
-            } catch (error) {
-                console.error("Erro ao carregar dados do Firebase", error);
-                alert("Erro ao conectar com o banco de dados.");
-            }
         }
 
         async function salvarDadosFirebase() {
@@ -200,29 +228,6 @@
             scheduleHistory.unshift({ date: new Date().toLocaleString('pt-BR'), action, desc });
             salvarDadosFirebase();
         }
-
-        // Sistema de Login
-        document.getElementById('login-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('login-btn');
-            btn.textContent = "Carregando...";
-            
-            await carregarDadosFirebase(); 
-
-            const u = document.getElementById('username').value.trim();
-            const p = document.getElementById('password').value.trim();
-
-            if (u === 'admin' && p === adminPassword) {
-                currentUserRole = 'admin';
-                iniciarApp();
-            } else if (u === 'tecnico' && p === 'UC@tec') {
-                currentUserRole = 'tecnico';
-                iniciarApp();
-            } else {
-                alert("Usuário ou senha incorretos!");
-                btn.textContent = "Entrar";
-            }
-        };
 
         function iniciarApp() {
             document.getElementById('login-screen').classList.add('hidden');
@@ -247,6 +252,7 @@
                 }
             }
 
+            // Escuta as alterações em tempo real no banco
             onValue(dbRef, (snapshot) => {
                 if(snapshot.exists()) {
                     const data = snapshot.val();
@@ -326,7 +332,6 @@
             }
         }
 
-        // Tornando funções de ação globais para serem chamadas nos modais
         window.confirmAction = (type, val) => {
             if(!schedule[currentSelectedDate]) schedule[currentSelectedDate] = {};
             if(type === 'add') { (schedule[currentSelectedDate].team = schedule[currentSelectedDate].team || []).push(val); addToHistory("Adição", `${val} em ${currentSelectedDate}`); }
@@ -379,6 +384,41 @@
                 addToHistory("Equipes", "Lista de duplas editada."); 
                 document.getElementById('edit-teams-modal').style.display = 'none';
                 salvarDadosFirebase();
+            };
+
+            // Novas funções de Exportação e Importação
+            document.getElementById('export-button').onclick = () => {
+                const backupData = { teams, schedule, scheduleHistory, adminPassword };
+                const blob = new Blob([JSON.stringify(backupData, null, 2)], {type:'application/json'});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `backup_escala_${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+            };
+
+            document.getElementById('import-button').onclick = () => document.getElementById('import-file-input').click();
+            document.getElementById('import-file-input').onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const fr = new FileReader();
+                fr.onload = async () => {
+                    try {
+                        const data = JSON.parse(fr.result);
+                        if(data.teams || data.schedule) {
+                            teams = data.teams || teams;
+                            schedule = data.schedule || {};
+                            scheduleHistory = data.scheduleHistory || [];
+                            adminPassword = data.adminPassword || adminPassword;
+                            await salvarDadosFirebase();
+                            renderCalendars();
+                            alert("Backup importado com sucesso para a NUVEM!");
+                        }
+                    } catch(err) {
+                        alert("Erro ao ler o arquivo JSON.");
+                    }
+                    e.target.value = ''; // reseta o input
+                };
+                fr.readAsText(file);
             };
 
             document.getElementById('action-swap-button').onclick = () => {
