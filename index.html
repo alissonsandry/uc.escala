@@ -317,4 +317,239 @@
                 for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
 
                 for (let d = 1; d <= totalDays; d++) {
-                    const ds = `${yr}-${String(m + 1).padStart(2, '0')}-${String
+                    const ds = `${yr}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                    const info = schedule[ds];
+                    const cell = document.createElement('div');
+                    
+                    cell.className = `calendar-day border sm:border-2 border-slate-300 rounded sm:rounded-lg p-1 sm:p-2 min-h-[85px] sm:min-h-[110px] flex flex-col ${currentUserRole === 'admin' ? 'cursor-pointer hover:border-blue-500 hover:shadow-md transition-shadow' : ''} shadow-sm ${info?.isHoliday ? 'bg-green-50 border-green-400' : 'bg-white'}`;
+                    
+                    if (currentUserRole === 'admin') {
+                        cell.onclick = () => {
+                            currentSelectedDate = ds;
+                            if (swapState.mode === 'team') {
+                                const t1 = schedule[swapState.firstDate]?.team, t2 = schedule[ds]?.team;
+                                if (t1 && t2) {
+                                    schedule[swapState.firstDate].team = t2; schedule[ds].team = t1;
+                                    addToHistory("Troca", `Plantão de ${swapState.firstDate} trocado com ${ds}`);
+                                    swapState = { mode: null, firstDate: null };
+                                    document.getElementById('swap-info').classList.add('hidden');
+                                }
+                            } else {
+                                document.getElementById('day-action-modal-date').textContent = "Data: " + ds.split('-').reverse().join('/');
+                                document.getElementById('day-action-modal').style.display='flex';
+                            }
+                        };
+                    }
+                    
+                    let html = `<div class="text-center font-bold text-blue-600 text-sm sm:text-lg leading-none mb-1 sm:mb-2">${d}</div>`;
+                    
+                    if (info?.events) {
+                        info.events.forEach(e => html += `<div class="bg-orange-100 text-orange-800 text-[9px] sm:text-[10px] px-1 rounded mb-1 truncate border-l-2 border-orange-400 font-medium">${e}</div>`);
+                    }
+                    
+                    if (info?.team) {
+                        const teamFormatted = info.team.map(t => t.replace(/ - /g, '<br>')).join('<hr class="my-0.5 sm:my-1 border-slate-300">');
+                        html += `<div class="mt-auto text-center bg-slate-100 p-0.5 sm:p-1 rounded sm:rounded-md border-t border-slate-200 text-[9px] sm:text-[11px] font-semibold break-words leading-tight sm:leading-snug w-full overflow-hidden">${teamFormatted}</div>`;
+                    }
+                    else if (info?.isHoliday) {
+                        html += `<div class="mt-auto text-center bg-green-200 text-green-800 p-0.5 sm:p-1 rounded sm:rounded-md text-[8px] sm:text-[10px] font-bold leading-tight">FERIADO<br><span class="font-normal truncate block text-[7px] sm:text-[9px]">${info.name}</span></div>`;
+                    }
+                    
+                    cell.innerHTML = html; 
+                    grid.appendChild(cell);
+                }
+                mDiv.appendChild(grid); cont.appendChild(mDiv);
+            }
+        }
+
+        window.confirmAction = (type, val) => {
+            if(!schedule[currentSelectedDate]) schedule[currentSelectedDate] = {};
+            if(type === 'add') { (schedule[currentSelectedDate].team = schedule[currentSelectedDate].team || []).push(val); addToHistory("Adição", `${val} em ${currentSelectedDate}`); }
+            else if(type === 'replace') { schedule[currentSelectedDate].team = val.split(' - '); addToHistory("Substituição", `Novo time em ${currentSelectedDate}: ${val}`); }
+            else if(type === 'remove') { schedule[currentSelectedDate].team = schedule[currentSelectedDate].team.filter(x => x !== val); addToHistory("Remoção", `${val} de ${currentSelectedDate}`); }
+            document.getElementById('selection-modal').style.display='none'; 
+        };
+
+        window.removeEvent = (i) => { 
+            schedule[currentSelectedDate].events.splice(i, 1); 
+            renderEvents(); 
+            salvarDadosFirebase(); 
+        };
+
+        function renderEvents() {
+            const l = document.getElementById('event-list-container'); l.innerHTML = '';
+            (schedule[currentSelectedDate]?.events || []).forEach((e, i) => {
+                l.innerHTML += `<div class="flex justify-between items-center bg-white p-2 text-sm border rounded mb-1"><span>${e}</span><button onclick="window.removeEvent(${i})" class="text-red-500 font-bold ml-2">✖</button></div>`;
+            });
+        }
+
+        function setupEventListeners() {
+            document.getElementById('logout-button').onclick = () => location.reload();
+            document.getElementById('printButton').onclick = () => window.print();
+
+            document.getElementById('clear-all-button').onclick = () => {
+                if(confirm("ATENÇÃO: Isso apagará permanentemente toda a escala na NUVEM. Continuar?")) {
+                    schedule = {}; scheduleHistory = []; salvarDadosFirebase();
+                }
+            };
+
+            document.getElementById('history-button').onclick = () => {
+                document.getElementById('history-list').innerHTML = scheduleHistory.map(h => `<div class="p-2 border-b bg-slate-50"><b>[${h.date}]</b> <i>${h.action}:</i> ${h.desc}</div>`).join('') || "<div class='p-2 text-center text-slate-500'>Sem registros.</div>";
+                document.getElementById('history-modal').style.display='flex';
+            };
+
+            document.getElementById('change-password-button').onclick = () => {
+                const n = prompt("Nova senha Admin:"); 
+                if(n) { adminPassword = n; salvarDadosFirebase(); alert("Senha alterada!"); }
+            };
+
+            document.getElementById('edit-teams-button').onclick = () => {
+                document.getElementById('teams-textarea').value = teams.join('\n');
+                document.getElementById('edit-teams-modal').style.display = 'flex';
+            };
+
+            document.getElementById('edit-teams-save').onclick = () => {
+                teams = document.getElementById('teams-textarea').value.split('\n').filter(t => t.includes('-'));
+                addToHistory("Equipes", "Lista de duplas editada."); 
+                document.getElementById('edit-teams-modal').style.display = 'none';
+            };
+
+            document.getElementById('export-button').onclick = () => {
+                const backupData = { teams, schedule, scheduleHistory, adminPassword };
+                const blob = new Blob([JSON.stringify(backupData, null, 2)], {type:'application/json'});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `backup_escala_${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+            };
+
+            document.getElementById('import-button').onclick = () => document.getElementById('import-file-input').click();
+            document.getElementById('import-file-input').onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const fr = new FileReader();
+                fr.onload = async () => {
+                    try {
+                        const data = JSON.parse(fr.result);
+                        if(data.teams || data.schedule) {
+                            teams = data.teams || teams;
+                            schedule = data.schedule || {};
+                            scheduleHistory = data.scheduleHistory || [];
+                            adminPassword = data.adminPassword || adminPassword;
+                            
+                            renderCalendars(); 
+                            await salvarDadosFirebase();
+                            alert("Backup importado e salvo na nuvem com sucesso!");
+                        }
+                    } catch(err) {
+                        alert("Erro ao ler o arquivo JSON.");
+                    }
+                    e.target.value = ''; 
+                };
+                fr.readAsText(file);
+            };
+
+            document.getElementById('action-swap-button').onclick = () => {
+                document.getElementById('day-action-modal').style.display='none'; 
+                swapState = { mode: 'team', firstDate: currentSelectedDate };
+                document.getElementById('swap-info').classList.remove('hidden'); 
+                document.getElementById('swap-message').textContent = "Modo Troca Ativado. Clique na data de destino para inverter os plantonistas.";
+            };
+            
+            document.getElementById('cancelSwapButton').onclick = () => {
+                swapState = { mode: null, firstDate: null }; 
+                document.getElementById('swap-info').classList.add('hidden');
+            }
+
+            document.getElementById('action-add-member-button').onclick = () => {
+                document.getElementById('day-action-modal').style.display='none';
+                const all = [...new Set(teams.flatMap(t => t.split(' - ')))];
+                document.getElementById('selection-title').textContent = "Adicionar Colaborador";
+                document.getElementById('selection-list').innerHTML = all.map(c => `<button onclick="window.confirmAction('add', '${c}')" class="w-full text-left p-3 border rounded hover:bg-green-50 font-bold transition-colors">＋ ${c}</button>`).join('');
+                document.getElementById('selection-modal').style.display='flex';
+            };
+
+            document.getElementById('action-replace-team-button').onclick = () => {
+                document.getElementById('day-action-modal').style.display='none';
+                document.getElementById('selection-title').textContent = "Substituir Dupla";
+                document.getElementById('selection-list').innerHTML = teams.map(t => `<button onclick="window.confirmAction('replace', '${t}')" class="w-full text-left p-3 border rounded hover:bg-purple-50 font-bold transition-colors">🔁 ${t}</button>`).join('');
+                document.getElementById('selection-modal').style.display='flex';
+            };
+
+            document.getElementById('action-remove-member-button').onclick = () => {
+                document.getElementById('day-action-modal').style.display='none';
+                const cur = schedule[currentSelectedDate]?.team || [];
+                document.getElementById('selection-title').textContent = "Remover do Plantão";
+                document.getElementById('selection-list').innerHTML = cur.map(c => `<button onclick="window.confirmAction('remove', '${c}')" class="w-full text-left p-3 border rounded hover:bg-red-50 text-red-600 font-bold transition-colors">✖ ${c}</button>`).join('');
+                document.getElementById('selection-modal').style.display='flex';
+            };
+
+            document.getElementById('action-mark-event-button').onclick = () => { 
+                document.getElementById('day-action-modal').style.display='none'; 
+                renderEvents(); 
+                document.getElementById('mark-event-modal').style.display='flex'; 
+            };
+
+            document.getElementById('add-event-button').onclick = () => {
+                const t = document.getElementById('event-text-input').value; if (!t) return;
+                if (!schedule[currentSelectedDate]) schedule[currentSelectedDate] = {};
+                if (!schedule[currentSelectedDate].events) schedule[currentSelectedDate].events = [];
+                schedule[currentSelectedDate].events.push(t);
+                addToHistory("Evento", `${t} em ${currentSelectedDate}`); 
+                document.getElementById('event-text-input').value = ""; 
+                renderEvents(); 
+            };
+
+            document.getElementById('generateButton').onclick = async () => {
+                const startM = parseInt(document.getElementById('startMonth').value);
+                const endM = parseInt(document.getElementById('endMonth').value);
+                const yr = parseInt(document.getElementById('year').value);
+                
+                if (document.getElementById('clearDataCheckbox').checked) { schedule = {}; scheduleHistory = []; }
+                
+                try {
+                    const r = await fetch(`https://brasilapi.com.br/api/feriados/v1/${yr}`);
+                    const h = await r.json(); holidays = h.map(x => ({ date: x.date, name: x.name }));
+                    holidays.push({ date: `${yr}-03-19`, name: 'São José' }, { date: `${yr}-03-25`, name: 'Data Magna CE' });
+                } catch (e) {}
+
+                const dates = [];
+                for (let m = startM; m <= endM; m++) {
+                    const days = new Date(yr, m + 1, 0).getDate();
+                    for (let d = 1; d <= days; d++) dates.push(new Date(yr, m, d));
+                }
+
+                dates.forEach(curDate => {
+                    const s = toLocalYYYYMMDD(curDate);
+                    const h = holidays.find(f => f.date === s);
+                    if (schedule[s]) delete schedule[s].team;
+                    if (h) schedule[s] = { ...(schedule[s] || {}), isHoliday: true, name: h.name };
+                });
+
+                const dutyDays = dates.filter(d => (d.getDay() === 0 || d.getDay() === 6) && !holidays.find(h => h.date === toLocalYYYYMMDD(d)));
+                let idx = 0;
+                
+                dutyDays.forEach(curDate => {
+                    const dateStr = toLocalYYYYMMDD(curDate);
+                    const forbidden = new Set();
+                    for (let i = 1; i <= 8; i++) {
+                        const checkD = new Date(curDate); checkD.setDate(checkD.getDate() - i);
+                        const past = (schedule[toLocalYYYYMMDD(checkD)]?.team || []).join(' - ');
+                        if (past) forbidden.add(past);
+                    }
+                    let assigned = false;
+                    for (let a = 0; a < teams.length; a++) {
+                        const cand = teams[idx];
+                        if (!forbidden.has(cand)) { schedule[dateStr] = { ...(schedule[dateStr] || {}), team: cand.split(' - ') }; assigned = true; idx = (idx + 1) % teams.length; break; }
+                        idx = (idx + 1) % teams.length;
+                    }
+                    if (!assigned) { schedule[dateStr] = { ...(schedule[dateStr] || {}), team: teams[idx].split(' - ') }; idx = (idx + 1) % teams.length; }
+                });
+                
+                addToHistory("Geração", "Escala automática gerada.");
+                renderCalendars(); 
+            };
+        }
+    </script>
+</body>
+</html>
