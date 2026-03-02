@@ -10,7 +10,18 @@
         body { font-family: 'Inter', sans-serif; }
         .modal { transition: opacity 0.3s ease; }
         .modal-content { transition: transform 0.3s ease; }
-        .calendar-grid { display: grid !important; grid-template-columns: repeat(7, 1fr) !important; gap: 8px; }
+        
+        /* Grid responsivo nativo */
+        .calendar-grid { 
+            display: grid !important; 
+            grid-template-columns: repeat(7, minmax(0, 1fr)) !important; 
+            gap: 4px; 
+        }
+
+        @media (min-width: 640px) {
+            .calendar-grid { gap: 8px; }
+        }
+
         @media print {
             @page { size: A4 landscape; margin: 0.5cm; }
             body, html { height: 100%; margin: 0; background-color: #fff !important; }
@@ -18,15 +29,15 @@
             #main-app-content, .container, #calendar-print-area { height: 100% !important; max-width: 100% !important; padding: 0 !important; margin: 0 !important; border: none !important; box-shadow: none !important; }
             .month-container { page-break-after: always; height: 98vh; display: flex; flex-direction: column; padding: 10px; box-sizing: border-box; }
             .calendar-grid { flex-grow: 1; gap: 4px !important; }
-            .calendar-day { border: 1px solid #cbd5e1 !important; border-radius: 0.5rem !important; }
+            .calendar-day { border: 1px solid #cbd5e1 !important; border-radius: 0.5rem !important; min-height: auto !important; }
         }
     </style>
 </head>
 <body class="bg-slate-200 text-slate-900">
 
-    <div id="login-screen" class="fixed inset-0 bg-slate-200 flex items-center justify-center z-[100] no-print">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm border-2 border-slate-300">
-            <h2 class="text-2xl font-bold text-center text-slate-800 mb-6">Acesso à Escala</h2>
+    <div id="login-screen" class="fixed inset-0 bg-slate-200 flex items-center justify-center z-[100] p-4 no-print">
+        <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-sm border-2 border-slate-300">
+            <h2 class="text-xl sm:text-2xl font-bold text-center text-slate-800 mb-6">Acesso à Escala</h2>
             <form id="login-form">
                 <div class="mb-4 text-left">
                     <label class="block text-sm font-medium mb-1">Usuário</label>
@@ -42,94 +53,97 @@
     </div>
 
     <div id="main-app-content" class="hidden">
-        <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
-            <header class="mb-8 no-print flex flex-col sm:flex-row sm:items-start sm:justify-between">
-                <div class="text-center sm:text-left">
-                    <h1 class="text-3xl sm:text-4xl font-bold text-slate-900">Gerador de Escala</h1>
-                    <p class="text-slate-700 mt-2" id="status-text">Sincronizado na nuvem.</p>
+        <div class="container mx-auto p-2 sm:p-4 lg:p-8 max-w-7xl">
+            <header class="mb-6 sm:mb-8 no-print flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                <div class="text-center lg:text-left">
+                    <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900">Gerador de Escala</h1>
+                    <p class="text-xs sm:text-sm text-slate-700 mt-1 sm:mt-2" id="status-text">Sincronizado na nuvem.</p>
                 </div>
-                <div class="flex gap-2 justify-center sm:justify-end mt-4 sm:mt-0 flex-wrap items-center">
-                    <button id="clear-all-button" class="admin-only bg-orange-700 text-white font-bold py-2 px-4 rounded-lg text-xs shadow hover:bg-orange-800">Limpar Tudo</button>
-                    <button id="change-password-button" class="admin-only bg-yellow-500 text-white font-bold py-2 px-4 rounded-lg text-xs shadow">Senha Admin</button>
-                    <button id="history-button" class="admin-only bg-purple-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow">Histórico</button>
-                    <button id="import-button" class="admin-only bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow">Importar</button>
-                    <button id="export-button" class="admin-only bg-teal-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow">Exportar</button>
-                    <button id="edit-teams-button" class="admin-only bg-slate-400 text-white font-bold py-2 px-4 rounded-lg text-xs shadow hover:bg-slate-500">Duplas</button>
-                    <button id="printButton" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow">Imprimir</button>
-                    <button id="logout-button" class="bg-red-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow">Sair</button>
+                <div class="flex gap-2 justify-center lg:justify-end flex-wrap items-center">
+                    <button id="clear-all-button" class="admin-only bg-orange-700 text-white font-bold py-2 px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs shadow hover:bg-orange-800">Limpar Tudo</button>
+                    <button id="change-password-button" class="admin-only bg-yellow-500 text-white font-bold py-2 px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs shadow hover:bg-yellow-600">Senha Admin</button>
+                    <button id="history-button" class="admin-only bg-purple-600 text-white font-bold py-2 px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs shadow hover:bg-purple-700">Histórico</button>
+                    <button id="import-button" class="admin-only bg-blue-600 text-white font-bold py-2 px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs shadow hover:bg-blue-700">Importar</button>
+                    <button id="export-button" class="admin-only bg-teal-600 text-white font-bold py-2 px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs shadow hover:bg-teal-700">Exportar</button>
+                    <button id="edit-teams-button" class="admin-only bg-slate-500 text-white font-bold py-2 px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs shadow hover:bg-slate-600">Duplas</button>
+                    <button id="printButton" class="admin-only bg-green-600 text-white font-bold py-2 px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs shadow hover:bg-green-700">Imprimir</button>
+                    <button id="logout-button" class="bg-red-600 text-white font-bold py-2 px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs shadow hover:bg-red-700">Sair</button>
                 </div>
             </header>
 
             <input type="file" id="import-file-input" accept="application/json" class="hidden no-print">
 
-            <div id="controls-section" class="admin-only bg-white p-6 rounded-2xl shadow-xl border border-slate-300 mb-8 flex flex-col sm:flex-row gap-4 items-center no-print">
-                <div class="flex-1 w-full"><label class="block text-sm font-medium mb-1">Mês Início</label><select id="startMonth" class="w-full p-3 border rounded-lg"></select></div>
-                <div class="flex-1 w-full"><label class="block text-sm font-medium mb-1">Mês Fim</label><select id="endMonth" class="w-full p-3 border rounded-lg"></select></div>
-                <div class="flex-1 w-full"><label class="block text-sm font-medium mb-1">Ano</label><select id="year" class="w-full p-3 border rounded-lg"></select></div>
-                <div class="flex flex-col gap-2">
-                    <button id="generateButton" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg">Gerar Escala</button>
-                    <label class="text-xs font-medium flex items-center"><input id="clearDataCheckbox" type="checkbox" class="mr-2"> Limpar antes</label>
+            <div id="controls-section" class="admin-only bg-white p-4 sm:p-6 rounded-2xl shadow-xl border border-slate-300 mb-6 sm:mb-8 flex flex-col md:flex-row gap-4 items-center no-print">
+                <div class="flex-1 w-full"><label class="block text-xs sm:text-sm font-medium mb-1">Mês Início</label><select id="startMonth" class="w-full p-2 sm:p-3 border rounded-lg text-sm"></select></div>
+                <div class="flex-1 w-full"><label class="block text-xs sm:text-sm font-medium mb-1">Mês Fim</label><select id="endMonth" class="w-full p-2 sm:p-3 border rounded-lg text-sm"></select></div>
+                <div class="flex-1 w-full"><label class="block text-xs sm:text-sm font-medium mb-1">Ano</label><select id="year" class="w-full p-2 sm:p-3 border rounded-lg text-sm"></select></div>
+                <div class="flex flex-col gap-2 w-full md:w-auto mt-2 md:mt-0">
+                    <button id="generateButton" class="w-full bg-blue-600 text-white font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-lg shadow-lg text-sm sm:text-base">Gerar Escala</button>
+                    <label class="text-xs font-medium flex items-center justify-center md:justify-start cursor-pointer"><input id="clearDataCheckbox" type="checkbox" class="mr-2"> Limpar antes</label>
                 </div>
             </div>
 
-            <div id="swap-info" class="hidden bg-blue-100 border-l-4 border-blue-500 p-4 rounded-lg mb-8 no-print"><p id="swap-message" class="font-bold text-blue-800"></p><button id="cancelSwapButton" class="mt-2 bg-red-500 text-white py-1 px-3 rounded-lg text-sm">Cancelar Troca</button></div>
+            <div id="swap-info" class="hidden bg-blue-100 border-l-4 border-blue-500 p-3 sm:p-4 rounded-lg mb-6 sm:mb-8 no-print flex flex-col sm:flex-row items-center justify-between gap-2">
+                <p id="swap-message" class="font-bold text-blue-800 text-sm text-center sm:text-left"></p>
+                <button id="cancelSwapButton" class="bg-red-500 text-white py-1.5 px-4 rounded-lg text-sm font-bold w-full sm:w-auto">Cancelar Troca</button>
+            </div>
 
-            <div id="calendar-print-area" class="bg-white p-6 rounded-2xl shadow-xl border border-slate-300">
-                <div id="calendar-container"></div>
+            <div id="calendar-print-area" class="bg-white p-2 sm:p-6 rounded-xl sm:rounded-2xl shadow-xl border border-slate-300 overflow-x-auto">
+                <div id="calendar-container" class="min-w-[320px]"></div>
             </div>
         </div>
     </div>
 
     <div id="day-action-modal" class="modal fixed inset-0 bg-black/60 items-center justify-center p-4 hidden z-[70] no-print">
-        <div class="modal-content bg-white p-6 rounded-2xl w-full max-w-sm text-center border-2 border-slate-300">
-            <h3 id="day-action-modal-date" class="text-lg font-bold mb-4"></h3>
-            <div class="space-y-3">
-                <button id="action-swap-button" class="w-full bg-blue-500 text-white py-3 rounded-lg font-bold shadow">Trocar Plantão</button>
-                <button id="action-add-member-button" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold shadow">Adicionar Colaborador</button>
-                <button id="action-replace-team-button" class="w-full bg-purple-500 text-white py-3 rounded-lg font-bold shadow">Substituir Dupla</button>
-                <button id="action-remove-member-button" class="w-full bg-red-500 text-white py-3 rounded-lg font-bold shadow">Remover Colaborador</button>
-                <button id="action-mark-event-button" class="w-full bg-orange-500 text-white py-3 rounded-lg font-bold shadow">Marcar Evento</button>
+        <div class="modal-content bg-white p-5 sm:p-6 rounded-2xl w-full max-w-sm text-center border-2 border-slate-300">
+            <h3 id="day-action-modal-date" class="text-base sm:text-lg font-bold mb-4"></h3>
+            <div class="space-y-2 sm:space-y-3">
+                <button id="action-swap-button" class="w-full bg-blue-500 text-white py-2.5 sm:py-3 rounded-lg font-bold shadow text-sm sm:text-base">Trocar Plantão</button>
+                <button id="action-add-member-button" class="w-full bg-green-500 text-white py-2.5 sm:py-3 rounded-lg font-bold shadow text-sm sm:text-base">Adicionar Colaborador</button>
+                <button id="action-replace-team-button" class="w-full bg-purple-500 text-white py-2.5 sm:py-3 rounded-lg font-bold shadow text-sm sm:text-base">Substituir Dupla</button>
+                <button id="action-remove-member-button" class="w-full bg-red-500 text-white py-2.5 sm:py-3 rounded-lg font-bold shadow text-sm sm:text-base">Remover Colaborador</button>
+                <button id="action-mark-event-button" class="w-full bg-orange-500 text-white py-2.5 sm:py-3 rounded-lg font-bold shadow text-sm sm:text-base">Marcar Evento</button>
             </div>
-            <button onclick="document.getElementById('day-action-modal').style.display='none'" class="mt-6 w-full bg-slate-200 py-2 rounded-lg font-bold">Fechar</button>
+            <button onclick="document.getElementById('day-action-modal').style.display='none'" class="mt-4 sm:mt-6 w-full bg-slate-200 py-2.5 rounded-lg font-bold text-sm sm:text-base">Fechar</button>
         </div>
     </div>
 
     <div id="edit-teams-modal" class="modal fixed inset-0 bg-black/60 items-center justify-center p-4 hidden z-[90] no-print">
-        <div class="modal-content bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md text-center border border-slate-200">
-            <h3 class="text-2xl font-bold text-slate-800 mb-2">Editar Duplas</h3>
-            <textarea id="teams-textarea" class="w-full h-48 p-4 border rounded-xl mb-6 font-medium text-slate-700"></textarea>
-            <div class="flex gap-4">
-                <button onclick="document.getElementById('edit-teams-modal').style.display='none'" class="w-full bg-slate-100 py-3 rounded-xl">Cancelar</button>
-                <button id="edit-teams-save" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg">Salvar</button>
+        <div class="modal-content bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-5 sm:p-8 w-full max-w-md text-center border border-slate-200">
+            <h3 class="text-xl sm:text-2xl font-bold text-slate-800 mb-2">Editar Duplas</h3>
+            <textarea id="teams-textarea" class="w-full h-40 sm:h-48 p-3 sm:p-4 border rounded-xl mb-4 sm:mb-6 font-medium text-slate-700 text-sm sm:text-base"></textarea>
+            <div class="flex gap-3 sm:gap-4">
+                <button onclick="document.getElementById('edit-teams-modal').style.display='none'" class="w-full bg-slate-100 py-2.5 sm:py-3 rounded-xl font-medium">Cancelar</button>
+                <button id="edit-teams-save" class="w-full bg-blue-600 text-white py-2.5 sm:py-3 rounded-xl font-bold shadow-lg">Salvar</button>
             </div>
         </div>
     </div>
 
     <div id="selection-modal" class="modal fixed inset-0 bg-black/60 items-center justify-center p-4 hidden z-[80] no-print">
-        <div class="modal-content bg-white p-6 rounded-2xl w-full max-w-md border-2 border-slate-300">
-            <h3 id="selection-title" class="font-bold mb-4 text-center"></h3>
-            <div id="selection-list" class="space-y-2 max-h-60 overflow-y-auto mb-4 p-1"></div>
-            <button onclick="document.getElementById('selection-modal').style.display='none'" class="w-full bg-slate-200 py-2 rounded-lg">Cancelar</button>
+        <div class="modal-content bg-white p-5 sm:p-6 rounded-2xl w-full max-w-md border-2 border-slate-300">
+            <h3 id="selection-title" class="font-bold mb-4 text-center text-sm sm:text-base"></h3>
+            <div id="selection-list" class="space-y-2 max-h-60 overflow-y-auto mb-4 p-1 text-sm sm:text-base"></div>
+            <button onclick="document.getElementById('selection-modal').style.display='none'" class="w-full bg-slate-200 py-2.5 rounded-lg font-bold text-sm sm:text-base">Cancelar</button>
         </div>
     </div>
 
     <div id="mark-event-modal" class="modal fixed inset-0 bg-black/60 items-center justify-center p-4 hidden z-[80] no-print">
-        <div class="modal-content bg-white p-6 rounded-2xl w-full max-w-md border-2 border-slate-300 text-center">
-            <h3 class="font-bold mb-2">Eventos do Dia</h3>
-            <div id="event-list-container" class="space-y-2 mb-4 border p-2 rounded max-h-40 overflow-y-auto bg-slate-50 text-left"></div>
+        <div class="modal-content bg-white p-5 sm:p-6 rounded-2xl w-full max-w-md border-2 border-slate-300 text-center">
+            <h3 class="font-bold mb-2 text-sm sm:text-base">Eventos do Dia</h3>
+            <div id="event-list-container" class="space-y-2 mb-4 border p-2 rounded max-h-40 overflow-y-auto bg-slate-50 text-left text-xs sm:text-sm"></div>
             <div class="flex gap-2">
-                <input type="text" id="event-text-input" class="flex-1 p-2 border rounded" placeholder="Novo evento">
-                <button id="add-event-button" class="bg-green-600 text-white px-4 rounded font-bold shadow">Add</button>
+                <input type="text" id="event-text-input" class="flex-1 p-2 border rounded text-sm" placeholder="Novo evento">
+                <button id="add-event-button" class="bg-green-600 text-white px-4 py-2 rounded font-bold shadow text-sm">Add</button>
             </div>
-            <button onclick="document.getElementById('mark-event-modal').style.display='none'" class="mt-4 w-full bg-slate-200 py-2 rounded font-bold">Fechar</button>
+            <button onclick="document.getElementById('mark-event-modal').style.display='none'" class="mt-4 w-full bg-slate-200 py-2.5 rounded font-bold text-sm sm:text-base">Fechar</button>
         </div>
     </div>
 
     <div id="history-modal" class="modal fixed inset-0 bg-black/60 items-center justify-center p-4 hidden z-[100] no-print">
-        <div class="modal-content bg-white rounded-2xl p-6 w-full max-w-2xl border-2 border-slate-300 flex flex-col max-h-[80vh]">
-            <h3 class="font-bold text-xl mb-4 text-center">Histórico de Alterações</h3>
-            <div id="history-list" class="overflow-y-auto space-y-2 border-t pt-2"></div>
-            <button onclick="document.getElementById('history-modal').style.display='none'" class="mt-4 bg-slate-200 py-2 rounded-lg font-bold">Fechar</button>
+        <div class="modal-content bg-white rounded-2xl p-5 sm:p-6 w-full max-w-2xl border-2 border-slate-300 flex flex-col max-h-[80vh]">
+            <h3 class="font-bold text-lg sm:text-xl mb-4 text-center">Histórico de Alterações</h3>
+            <div id="history-list" class="overflow-y-auto space-y-2 border-t pt-2 text-xs sm:text-sm"></div>
+            <button onclick="document.getElementById('history-modal').style.display='none'" class="mt-4 bg-slate-200 py-2.5 rounded-lg font-bold text-sm sm:text-base">Fechar</button>
         </div>
     </div>
 
@@ -163,7 +177,6 @@
             populateSelectors();
             setupEventListeners();
 
-            // Reforço no sistema de Login
             document.getElementById('login-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const btn = document.getElementById('login-btn');
@@ -171,7 +184,6 @@
                 btn.disabled = true;
 
                 try {
-                    // Força o carregamento da senha salva no Firebase ANTES de checar o login
                     const snapshot = await get(dbRef);
                     if (snapshot.exists()) {
                         const data = snapshot.val();
@@ -197,7 +209,7 @@
                     }
                 } catch (error) {
                     console.error("Erro no Firebase:", error);
-                    alert("Erro ao conectar. Verifique as Regras de Segurança do Firebase (devem estar .read: true e .write: true).");
+                    alert("Erro ao conectar. Verifique as Regras de Segurança do Firebase.");
                     btn.textContent = "Entrar";
                     btn.disabled = false;
                 }
@@ -252,7 +264,6 @@
                 }
             }
 
-            // Escuta as alterações em tempo real no banco
             onValue(dbRef, (snapshot) => {
                 if(snapshot.exists()) {
                     const data = snapshot.val();
@@ -282,13 +293,13 @@
             }
 
             for (let m = startM; m <= endM; m++) {
-                const mDiv = document.createElement('div'); mDiv.className = 'month-container';
+                const mDiv = document.createElement('div'); mDiv.className = 'month-container mt-2 sm:mt-4';
                 const monthName = document.getElementById('startMonth').options[m].text;
-                mDiv.innerHTML = `<h2 class="calendar-title font-bold text-center text-slate-800 mb-6 uppercase">Escala de ${monthName} de ${yr}</h2>`;
+                mDiv.innerHTML = `<h2 class="calendar-title font-bold text-center text-slate-800 mb-3 sm:mb-6 uppercase text-sm sm:text-lg">Escala de ${monthName} de ${yr}</h2>`;
                 
                 const grid = document.createElement('div');
                 grid.className = 'calendar-grid';
-                ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach(d => grid.innerHTML += `<div class="font-bold text-center text-slate-600 p-2 uppercase text-xs">${d}</div>`);
+                ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach(d => grid.innerHTML += `<div class="font-bold text-center text-slate-600 p-1 sm:p-2 uppercase text-[10px] sm:text-xs truncate">${d}</div>`);
 
                 const firstDay = new Date(yr, m, 1).getDay();
                 const totalDays = new Date(yr, m + 1, 0).getDate();
@@ -298,7 +309,9 @@
                     const ds = `${yr}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                     const info = schedule[ds];
                     const cell = document.createElement('div');
-                    cell.className = `calendar-day border-2 border-slate-300 rounded-lg p-2 min-h-[110px] flex flex-col cursor-pointer hover:border-blue-500 shadow-sm ${info?.isHoliday ? 'bg-green-50 border-green-400' : ''}`;
+                    
+                    // Ajuste de classes para responsividade nas células
+                    cell.className = `calendar-day border sm:border-2 border-slate-300 rounded sm:rounded-lg p-1 sm:p-2 min-h-[85px] sm:min-h-[110px] flex flex-col ${currentUserRole === 'admin' ? 'cursor-pointer hover:border-blue-500 hover:shadow-md transition-shadow' : ''} shadow-sm ${info?.isHoliday ? 'bg-green-50 border-green-400' : 'bg-white'}`;
                     
                     if (currentUserRole === 'admin') {
                         cell.onclick = () => {
@@ -317,16 +330,25 @@
                                 document.getElementById('day-action-modal').style.display='flex';
                             }
                         };
-                    } else {
-                        cell.classList.remove('cursor-pointer', 'hover:border-blue-500'); 
                     }
                     
-                    let html = `<div class="text-center font-bold text-blue-600 text-lg">${d}</div>`;
-                    if (info?.events) info.events.forEach(e => html += `<div class="bg-orange-100 text-orange-800 text-[10px] px-1 rounded mb-1 truncate border-l-2 border-orange-400 font-medium">${e}</div>`);
-                    if (info?.team) html += `<div class="mt-auto text-center bg-slate-100 p-1 rounded-md border-t-2 border-slate-200 text-[11px] font-semibold">${info.team.join('<br>')}</div>`;
-                    else if (info?.isHoliday) html += `<div class="mt-auto text-center bg-green-200 text-green-800 p-1 rounded-md text-[10px] font-bold">FERIADO<br>${info.name}</div>`;
+                    let html = `<div class="text-center font-bold text-blue-600 text-sm sm:text-lg leading-none mb-1 sm:mb-2">${d}</div>`;
                     
-                    cell.innerHTML = html; grid.appendChild(cell);
+                    if (info?.events) {
+                        info.events.forEach(e => html += `<div class="bg-orange-100 text-orange-800 text-[9px] sm:text-[10px] px-1 rounded mb-1 truncate border-l-2 border-orange-400 font-medium">${e}</div>`);
+                    }
+                    
+                    if (info?.team) {
+                        // Responsividade Extrema: Quebra os nomes da dupla em linhas diferentes separadas por uma linhazinha
+                        const teamFormatted = info.team.map(t => t.replace(/ - /g, '<br>')).join('<hr class="my-0.5 sm:my-1 border-slate-300">');
+                        html += `<div class="mt-auto text-center bg-slate-100 p-0.5 sm:p-1 rounded sm:rounded-md border-t border-slate-200 text-[9px] sm:text-[11px] font-semibold break-words leading-tight sm:leading-snug w-full overflow-hidden">${teamFormatted}</div>`;
+                    }
+                    else if (info?.isHoliday) {
+                        html += `<div class="mt-auto text-center bg-green-200 text-green-800 p-0.5 sm:p-1 rounded sm:rounded-md text-[8px] sm:text-[10px] font-bold leading-tight">FERIADO<br><span class="font-normal truncate block text-[7px] sm:text-[9px]">${info.name}</span></div>`;
+                    }
+                    
+                    cell.innerHTML = html; 
+                    grid.appendChild(cell);
                 }
                 mDiv.appendChild(grid); cont.appendChild(mDiv);
             }
@@ -350,7 +372,7 @@
         function renderEvents() {
             const l = document.getElementById('event-list-container'); l.innerHTML = '';
             (schedule[currentSelectedDate]?.events || []).forEach((e, i) => {
-                l.innerHTML += `<div class="flex justify-between bg-white p-2 text-xs border rounded mb-1"><span>${e}</span><button onclick="window.removeEvent(${i})" class="text-red-500 font-bold">✖</button></div>`;
+                l.innerHTML += `<div class="flex justify-between items-center bg-white p-2 text-sm border rounded mb-1"><span>${e}</span><button onclick="window.removeEvent(${i})" class="text-red-500 font-bold ml-2">✖</button></div>`;
             });
         }
 
@@ -365,7 +387,7 @@
             };
 
             document.getElementById('history-button').onclick = () => {
-                document.getElementById('history-list').innerHTML = scheduleHistory.map(h => `<div class="text-xs p-2 border-b bg-slate-50"><b>[${h.date}]</b> <i>${h.action}:</i> ${h.desc}</div>`).join('') || "Sem registros.";
+                document.getElementById('history-list').innerHTML = scheduleHistory.map(h => `<div class="p-2 border-b bg-slate-50"><b>[${h.date}]</b> <i>${h.action}:</i> ${h.desc}</div>`).join('') || "<div class='p-2 text-center text-slate-500'>Sem registros.</div>";
                 document.getElementById('history-modal').style.display='flex';
             };
 
@@ -386,7 +408,7 @@
                 salvarDadosFirebase();
             };
 
-            // Novas funções de Exportação e Importação
+            // Funções de Exportação e Importação (JSON)
             document.getElementById('export-button').onclick = () => {
                 const backupData = { teams, schedule, scheduleHistory, adminPassword };
                 const blob = new Blob([JSON.stringify(backupData, null, 2)], {type:'application/json'});
@@ -409,9 +431,14 @@
                             schedule = data.schedule || {};
                             scheduleHistory = data.scheduleHistory || [];
                             adminPassword = data.adminPassword || adminPassword;
+                            
+                            // Força a renderização local antes de salvar na nuvem para feedback instantâneo
+                            renderCalendars(); 
+                            
+                            // Salva os dados importados no Firebase
                             await salvarDadosFirebase();
-                            renderCalendars();
-                            alert("Backup importado com sucesso para a NUVEM!");
+                            
+                            alert("Backup importado e salvo na nuvem com sucesso!");
                         }
                     } catch(err) {
                         alert("Erro ao ler o arquivo JSON.");
@@ -425,7 +452,7 @@
                 document.getElementById('day-action-modal').style.display='none'; 
                 swapState = { mode: 'team', firstDate: currentSelectedDate };
                 document.getElementById('swap-info').classList.remove('hidden'); 
-                document.getElementById('swap-message').textContent = "Modo Troca Ativado. Clique na data de destino.";
+                document.getElementById('swap-message').textContent = "Modo Troca Ativado. Clique na data de destino para inverter os plantonistas.";
             };
             
             document.getElementById('cancelSwapButton').onclick = () => {
@@ -437,14 +464,14 @@
                 document.getElementById('day-action-modal').style.display='none';
                 const all = [...new Set(teams.flatMap(t => t.split(' - ')))];
                 document.getElementById('selection-title').textContent = "Adicionar Colaborador";
-                document.getElementById('selection-list').innerHTML = all.map(c => `<button onclick="window.confirmAction('add', '${c}')" class="w-full text-left p-3 border rounded hover:bg-green-50 font-bold">＋ ${c}</button>`).join('');
+                document.getElementById('selection-list').innerHTML = all.map(c => `<button onclick="window.confirmAction('add', '${c}')" class="w-full text-left p-3 border rounded hover:bg-green-50 font-bold transition-colors">＋ ${c}</button>`).join('');
                 document.getElementById('selection-modal').style.display='flex';
             };
 
             document.getElementById('action-replace-team-button').onclick = () => {
                 document.getElementById('day-action-modal').style.display='none';
                 document.getElementById('selection-title').textContent = "Substituir Dupla";
-                document.getElementById('selection-list').innerHTML = teams.map(t => `<button onclick="window.confirmAction('replace', '${t}')" class="w-full text-left p-3 border rounded hover:bg-purple-50 font-bold">🔁 ${t}</button>`).join('');
+                document.getElementById('selection-list').innerHTML = teams.map(t => `<button onclick="window.confirmAction('replace', '${t}')" class="w-full text-left p-3 border rounded hover:bg-purple-50 font-bold transition-colors">🔁 ${t}</button>`).join('');
                 document.getElementById('selection-modal').style.display='flex';
             };
 
@@ -452,7 +479,7 @@
                 document.getElementById('day-action-modal').style.display='none';
                 const cur = schedule[currentSelectedDate]?.team || [];
                 document.getElementById('selection-title').textContent = "Remover do Plantão";
-                document.getElementById('selection-list').innerHTML = cur.map(c => `<button onclick="window.confirmAction('remove', '${c}')" class="w-full text-left p-3 border rounded hover:bg-red-50 text-red-600 font-bold">✖ ${c}</button>`).join('');
+                document.getElementById('selection-list').innerHTML = cur.map(c => `<button onclick="window.confirmAction('remove', '${c}')" class="w-full text-left p-3 border rounded hover:bg-red-50 text-red-600 font-bold transition-colors">✖ ${c}</button>`).join('');
                 document.getElementById('selection-modal').style.display='flex';
             };
 
