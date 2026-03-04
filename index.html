@@ -156,7 +156,7 @@
             </div>
             <h3 class="font-bold text-xl mb-2 text-slate-800">Aviso Importante</h3>
             <p class="text-sm text-slate-600 mb-6">A escala poderá ter mudança em caso de feriados ou falta de programação de atividades.</p>
-            <button onclick="document.getElementById('tecnico-alert-modal').style.display='none'" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-blue-700 transition shadow-md">Ciente</button>
+            <button onclick="document.getElementById('tecnico-alert-modal').classList.add('hidden'); document.getElementById('tecnico-alert-modal').classList.remove('flex');" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-blue-700 transition shadow-md">Ciente</button>
         </div>
     </div>
 
@@ -164,8 +164,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // IMPORTANTE: Como geramos uma nova chave de API no Google Cloud para resolver o alerta de segurança,
-        // substitua o valor abaixo (AlzaSyAGE...) pela nova chave que você copiou lá no console do Cloud!
         const firebaseConfig = {
             apiKey: "AIzaSyAGE-crnO8PTmUylAK4bNLzn1T8bc1wZ3s",
             authDomain: "uc-escalas.firebaseapp.com",
@@ -275,8 +273,10 @@
                 document.getElementById('endMonth').value = now.getMonth();
                 document.getElementById('year').value = now.getFullYear();
                 
-                // Exibe o modal de aviso para o técnico logo após o login
-                document.getElementById('tecnico-alert-modal').style.display = 'flex';
+                // Abre o popup do técnico manipulando as classes (Garante funcionamento Desktop e Mobile)
+                const modalAlerta = document.getElementById('tecnico-alert-modal');
+                modalAlerta.classList.remove('hidden');
+                modalAlerta.classList.add('flex');
                 
             } else {
                 if (Object.keys(schedule).length > 0) {
