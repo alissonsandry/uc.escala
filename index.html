@@ -147,10 +147,25 @@
         </div>
     </div>
 
+    <div id="tecnico-alert-modal" class="modal fixed inset-0 bg-black/60 items-center justify-center p-4 hidden z-[110] no-print">
+        <div class="modal-content bg-white p-6 rounded-2xl w-full max-w-sm text-center border-t-8 border-yellow-400 shadow-2xl">
+            <div class="text-yellow-500 mb-4 flex justify-center">
+                <svg class="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+            </div>
+            <h3 class="font-bold text-xl mb-2 text-slate-800">Aviso Importante</h3>
+            <p class="text-sm text-slate-600 mb-6">A escala poderá ter mudança em caso de feriados ou falta de programação de atividades.</p>
+            <button onclick="document.getElementById('tecnico-alert-modal').style.display='none'" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-blue-700 transition shadow-md">Ciente</button>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+        // IMPORTANTE: Como geramos uma nova chave de API no Google Cloud para resolver o alerta de segurança,
+        // substitua o valor abaixo (AlzaSyAGE...) pela nova chave que você copiou lá no console do Cloud!
         const firebaseConfig = {
             apiKey: "AIzaSyAGE-crnO8PTmUylAK4bNLzn1T8bc1wZ3s",
             authDomain: "uc-escalas.firebaseapp.com",
@@ -173,7 +188,6 @@
         let currentUserRole = null; 
         let currentSelectedDate = null, swapState = { mode: null, firstDate: null };
 
-        // Função segura para pegar a data no formato YYYY-MM-DD ignorando fuso horário
         function toLocalYYYYMMDD(d) {
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         }
@@ -235,7 +249,6 @@
         async function salvarDadosFirebase() {
             if (currentUserRole !== 'admin') return; 
             try {
-                // A limpeza via JSON stripa qualquer valor undefined que o Firebase bloqueia
                 const dataToSave = JSON.parse(JSON.stringify({ teams, schedule, scheduleHistory, adminPassword }));
                 await set(dbRef, dataToSave);
             } catch (error) {
@@ -261,11 +274,13 @@
                 document.getElementById('startMonth').value = now.getMonth();
                 document.getElementById('endMonth').value = now.getMonth();
                 document.getElementById('year').value = now.getFullYear();
+                
+                // Exibe o modal de aviso para o técnico logo após o login
+                document.getElementById('tecnico-alert-modal').style.display = 'flex';
+                
             } else {
                 if (Object.keys(schedule).length > 0) {
                     const dates = Object.keys(schedule).sort();
-                    
-                    // Tratamento seguro para carregar os meses corretos sem bug de fuso horário
                     const firstDateParts = dates[0].split('-');
                     const lastDateParts = dates[dates.length - 1].split('-');
                     
