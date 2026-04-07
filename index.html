@@ -22,14 +22,61 @@
             .calendar-grid { gap: 8px; }
         }
 
+        /* CORREÇÃO DA IMPRESSÃO */
         @media print {
-            @page { size: A4 landscape; margin: 0.5cm; }
-            body, html { height: 100%; margin: 0; background-color: #fff !important; }
+            @page { 
+                size: A4 landscape; 
+                margin: 0.5cm; 
+            }
+            body, html { 
+                height: auto !important; 
+                margin: 0 !important; 
+                background-color: #fff !important; 
+                overflow: visible !important;
+            }
             .no-print { display: none !important; }
-            #main-app-content, .container, #calendar-print-area { height: 100% !important; max-width: 100% !important; padding: 0 !important; margin: 0 !important; border: none !important; box-shadow: none !important; }
-            .month-container { page-break-after: always; height: 98vh; display: flex; flex-direction: column; padding: 10px; box-sizing: border-box; }
-            .calendar-grid { flex-grow: 1; gap: 4px !important; }
-            .calendar-day { border: 1px solid #cbd5e1 !important; border-radius: 0.5rem !important; min-height: auto !important; }
+            
+            #main-app-content, .container, #calendar-print-area { 
+                height: auto !important; 
+                max-width: 100% !important; 
+                padding: 0 !important; 
+                margin: 0 !important; 
+                border: none !important; 
+                box-shadow: none !important;
+                overflow: visible !important;
+                display: block !important;
+            }
+            
+            .month-container { 
+                page-break-after: always !important; 
+                break-after: page !important;
+                display: flex !important; 
+                flex-direction: column !important; 
+                padding: 10px !important; 
+                box-sizing: border-box !important;
+                height: auto !important;
+                min-height: 180mm !important; /* Ajuste para preencher a folha landscape */
+            }
+            
+            .calendar-grid { 
+                flex-grow: 1 !important; 
+                gap: 4px !important; 
+                page-break-inside: avoid !important;
+            }
+            
+            .calendar-day { 
+                border: 1px solid #000 !important; /* Preto puro para contraste */
+                border-radius: 0.5rem !important; 
+                min-height: 2.5cm !important; /* Tamanho mínimo para os quadros */
+                background-color: #fff !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .calendar-title {
+                color: #000 !important;
+                margin-bottom: 10px !important;
+            }
         }
     </style>
 </head>
@@ -88,12 +135,13 @@
                 <button id="cancelSwapButton" class="bg-red-500 text-white py-1.5 px-4 rounded-lg text-sm font-bold w-full sm:w-auto">Cancelar Troca</button>
             </div>
 
-            <div id="calendar-print-area" class="bg-white p-2 sm:p-6 rounded-xl sm:rounded-2xl shadow-xl border border-slate-300 overflow-x-auto">
+            <div id="calendar-print-area" class="bg-white p-2 sm:p-6 rounded-xl sm:rounded-2xl shadow-xl border border-slate-300">
                 <div id="calendar-container" class="min-w-[320px]"></div>
             </div>
         </div>
     </div>
 
+    <!-- Modais omitidos para brevidade, mantendo a estrutura original -->
     <div id="day-action-modal" class="modal fixed inset-0 bg-black/60 items-center justify-center p-4 hidden z-[70] no-print">
         <div class="modal-content bg-white p-5 sm:p-6 rounded-2xl w-full max-w-sm text-center border-2 border-slate-300">
             <h3 id="day-action-modal-date" class="text-base sm:text-lg font-bold mb-4"></h3>
@@ -273,7 +321,6 @@
                 document.getElementById('endMonth').value = now.getMonth();
                 document.getElementById('year').value = now.getFullYear();
                 
-                // Abre o popup do técnico manipulando as classes (Garante funcionamento Desktop e Mobile)
                 const modalAlerta = document.getElementById('tecnico-alert-modal');
                 modalAlerta.classList.remove('hidden');
                 modalAlerta.classList.add('flex');
@@ -336,7 +383,7 @@
                     const info = schedule[ds];
                     const cell = document.createElement('div');
                     
-                    cell.className = `calendar-day border sm:border-2 border-slate-300 rounded sm:rounded-lg p-1 sm:p-2 min-h-[85px] sm:min-h-[110px] flex flex-col ${currentUserRole === 'admin' ? 'cursor-pointer hover:border-blue-500 hover:shadow-md transition-shadow' : ''} shadow-sm ${info?.isHoliday ? 'bg-green-50 border-green-400' : 'bg-white'}`;
+                    cell.className = `calendar-day border sm:border-2 border-slate-300 rounded sm:rounded-lg p-1 sm:p-2 flex flex-col ${currentUserRole === 'admin' ? 'cursor-pointer hover:border-blue-500 hover:shadow-md transition-shadow' : ''} shadow-sm ${info?.isHoliday ? 'bg-green-50 border-green-400' : 'bg-white'}`;
                     
                     if (currentUserRole === 'admin') {
                         cell.onclick = () => {
@@ -383,6 +430,7 @@
             else if(type === 'replace') { schedule[currentSelectedDate].team = val.split(' - '); addToHistory("Substituição", `Novo time em ${currentSelectedDate}: ${val}`); }
             else if(type === 'remove') { schedule[currentSelectedDate].team = schedule[currentSelectedDate].team.filter(x => x !== val); addToHistory("Remoção", `${val} de ${currentSelectedDate}`); }
             document.getElementById('selection-modal').style.display='none'; 
+            renderCalendars();
         };
 
         window.removeEvent = (i) => { 
@@ -427,6 +475,7 @@
                 teams = document.getElementById('teams-textarea').value.split('\n').filter(t => t.includes('-'));
                 addToHistory("Equipes", "Lista de duplas editada."); 
                 document.getElementById('edit-teams-modal').style.display = 'none';
+                renderCalendars();
             };
 
             document.getElementById('export-button').onclick = () => {
@@ -513,6 +562,7 @@
                 addToHistory("Evento", `${t} em ${currentSelectedDate}`); 
                 document.getElementById('event-text-input').value = ""; 
                 renderEvents(); 
+                renderCalendars();
             };
 
             document.getElementById('generateButton').onclick = async () => {
