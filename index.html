@@ -11,7 +11,6 @@
         .modal { transition: opacity 0.3s ease; }
         .modal-content { transition: transform 0.3s ease; }
         
-        /* Grid responsivo nativo */
         .calendar-grid { 
             display: grid !important; 
             grid-template-columns: repeat(7, minmax(0, 1fr)) !important; 
@@ -22,7 +21,6 @@
             .calendar-grid { gap: 8px; }
         }
 
-        /* CORREÇÃO DA IMPRESSÃO */
         @media print {
             @page { 
                 size: A4 landscape; 
@@ -55,7 +53,7 @@
                 padding: 10px !important; 
                 box-sizing: border-box !important;
                 height: auto !important;
-                min-height: 180mm !important; /* Ajuste para preencher a folha landscape */
+                min-height: 180mm !important;
             }
             
             .calendar-grid { 
@@ -65,9 +63,9 @@
             }
             
             .calendar-day { 
-                border: 1px solid #000 !important; /* Preto puro para contraste */
+                border: 1px solid #000 !important;
                 border-radius: 0.5rem !important; 
-                min-height: 2.5cm !important; /* Tamanho mínimo para os quadros */
+                min-height: 2.5cm !important;
                 background-color: #fff !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
@@ -113,7 +111,7 @@
                     <button id="import-button" class="admin-only bg-blue-600 text-white font-bold py-2 px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs shadow hover:bg-blue-700">Importar</button>
                     <button id="export-button" class="admin-only bg-teal-600 text-white font-bold py-2 px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs shadow hover:bg-teal-700">Exportar</button>
                     <button id="edit-teams-button" class="admin-only bg-slate-500 text-white font-bold py-2 px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs shadow hover:bg-slate-600">Duplas</button>
-                    <button id="printButton" class="admin-only bg-green-600 text-white font-bold py-2 px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs shadow hover:bg-green-700">Imprimir</button>
+                    <button id="printButton" class="bg-green-600 text-white font-bold py-2 px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs shadow hover:bg-green-700">Imprimir</button>
                     <button id="logout-button" class="bg-red-600 text-white font-bold py-2 px-3 sm:px-4 rounded-lg text-[10px] sm:text-xs shadow hover:bg-red-700">Sair</button>
                 </div>
             </header>
@@ -121,16 +119,27 @@
             <input type="file" id="import-file-input" accept="application/json" class="hidden no-print">
 
             <div id="controls-section" class="admin-only bg-white p-4 sm:p-6 rounded-2xl shadow-xl border border-slate-300 mb-6 sm:mb-8 flex flex-col md:flex-row gap-4 items-center no-print">
-                <div class="flex-1 w-full"><label class="block text-xs sm:text-sm font-medium mb-1">Mês Início</label><select id="startMonth" class="w-full p-2 sm:p-3 border rounded-lg text-sm"></select></div>
-                <div class="flex-1 w-full"><label class="block text-xs sm:text-sm font-medium mb-1">Mês Fim</label><select id="endMonth" class="w-full p-2 sm:p-3 border rounded-lg text-sm"></select></div>
-                <div class="flex-1 w-full"><label class="block text-xs sm:text-sm font-medium mb-1">Ano</label><select id="year" class="w-full p-2 sm:p-3 border rounded-lg text-sm"></select></div>
+                <div class="flex-1 w-full">
+                    <label class="block text-xs sm:text-sm font-medium mb-1">Mês Início</label>
+                    <select id="startMonth" class="w-full p-2 sm:p-3 border rounded-lg text-sm"></select>
+                </div>
+                <div class="flex-1 w-full">
+                    <label class="block text-xs sm:text-sm font-medium mb-1">Mês Fim</label>
+                    <select id="endMonth" class="w-full p-2 sm:p-3 border rounded-lg text-sm"></select>
+                </div>
+                <div class="flex-1 w-full">
+                    <label class="block text-xs sm:text-sm font-medium mb-1">Ano</label>
+                    <select id="year" class="w-full p-2 sm:p-3 border rounded-lg text-sm"></select>
+                </div>
                 <div class="flex flex-col gap-2 w-full md:w-auto mt-2 md:mt-0">
                     <button id="generateButton" class="w-full bg-blue-600 text-white font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-lg shadow-lg text-sm sm:text-base">Gerar Escala</button>
-                    <label class="text-xs font-medium flex items-center justify-center md:justify-start cursor-pointer"><input id="clearDataCheckbox" type="checkbox" class="mr-2"> Limpar antes</label>
+                    <label class="text-xs font-medium flex items-center justify-center md:justify-start cursor-pointer">
+                        <input id="clearDataCheckbox" type="checkbox" class="mr-2"> Limpar antes
+                    </label>
                 </div>
             </div>
 
-            <div id="swap-info" class="hidden bg-blue-100 border-l-4 border-blue-500 p-3 sm:p-4 rounded-lg mb-6 sm:mb-8 no-print flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div id="swap-info" class="hidden bg-blue-100 border-l-4 border-blue-500 p-3 sm:p-4 rounded-lg mb-6 sm:mb-8 no-print flex flex-col sm:row items-center justify-between gap-2">
                 <p id="swap-message" class="font-bold text-blue-800 text-sm text-center sm:text-left"></p>
                 <button id="cancelSwapButton" class="bg-red-500 text-white py-1.5 px-4 rounded-lg text-sm font-bold w-full sm:w-auto">Cancelar Troca</button>
             </div>
@@ -141,7 +150,6 @@
         </div>
     </div>
 
-    <!-- Modais omitidos para brevidade, mantendo a estrutura original -->
     <div id="day-action-modal" class="modal fixed inset-0 bg-black/60 items-center justify-center p-4 hidden z-[70] no-print">
         <div class="modal-content bg-white p-5 sm:p-6 rounded-2xl w-full max-w-sm text-center border-2 border-slate-300">
             <h3 id="day-action-modal-date" class="text-base sm:text-lg font-bold mb-4"></h3>
@@ -204,7 +212,7 @@
             </div>
             <h3 class="font-bold text-xl mb-2 text-slate-800">Aviso Importante</h3>
             <p class="text-sm text-slate-600 mb-6">A escala poderá ter mudança em caso de feriados ou mudanças na programação de atividades.</p>
-            <button onclick="document.getElementById('tecnico-alert-modal').classList.add('hidden'); document.getElementById('tecnico-alert-modal').classList.remove('flex');" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-blue-700 transition shadow-md">Ciente</button>
+            <button onclick="document.getElementById('tecnico-alert-modal').classList.add('hidden');" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-blue-700 transition shadow-md">Ciente</button>
         </div>
     </div>
 
@@ -290,6 +298,11 @@
             const yr = new Date().getFullYear();
             for (let y = yr - 1; y <= yr + 2; y++) document.getElementById('year').add(new Option(y, y));
             document.getElementById('year').value = yr;
+            
+            // Set default view to current month
+            const now = new Date();
+            document.getElementById('startMonth').value = now.getMonth();
+            document.getElementById('endMonth').value = now.getMonth();
         }
 
         async function salvarDadosFirebase() {
@@ -299,7 +312,7 @@
                 await set(dbRef, dataToSave);
             } catch (error) {
                 console.error("Erro ao salvar", error);
-                alert("ERRO AO SALVAR NA NUVEM! Verifique as permissões de Escrita no Firebase (aba Regras).");
+                alert("ERRO AO SALVAR NA NUVEM!");
             }
         }
 
@@ -316,25 +329,9 @@
                 document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
                 document.getElementById('status-text').textContent = "Visualização Restrita: Apenas o mês corrente.";
                 
-                const now = new Date();
-                document.getElementById('startMonth').value = now.getMonth();
-                document.getElementById('endMonth').value = now.getMonth();
-                document.getElementById('year').value = now.getFullYear();
-                
                 const modalAlerta = document.getElementById('tecnico-alert-modal');
                 modalAlerta.classList.remove('hidden');
                 modalAlerta.classList.add('flex');
-                
-            } else {
-                if (Object.keys(schedule).length > 0) {
-                    const dates = Object.keys(schedule).sort();
-                    const firstDateParts = dates[0].split('-');
-                    const lastDateParts = dates[dates.length - 1].split('-');
-                    
-                    document.getElementById('startMonth').value = parseInt(firstDateParts[1]) - 1;
-                    document.getElementById('endMonth').value = parseInt(lastDateParts[1]) - 1;
-                    document.getElementById('year').value = firstDateParts[0];
-                }
             }
 
             onValue(dbRef, (snapshot) => {
@@ -352,21 +349,27 @@
         }
 
         function renderCalendars() {
-            const cont = document.getElementById('calendar-container'); cont.innerHTML = '';
+            const cont = document.getElementById('calendar-container'); 
+            cont.innerHTML = '';
             
-            let startM = parseInt(document.getElementById('startMonth').value);
-            let endM = parseInt(document.getElementById('endMonth').value);
-            let yr = parseInt(document.getElementById('year').value);
+            let startM, endM, yr;
 
             if (currentUserRole === 'tecnico') {
                 const now = new Date();
                 startM = now.getMonth();
                 endM = now.getMonth();
                 yr = now.getFullYear();
+            } else {
+                startM = parseInt(document.getElementById('startMonth').value);
+                endM = parseInt(document.getElementById('endMonth').value);
+                yr = parseInt(document.getElementById('year').value);
+                
+                if (endM < startM) endM = startM;
             }
 
             for (let m = startM; m <= endM; m++) {
-                const mDiv = document.createElement('div'); mDiv.className = 'month-container mt-2 sm:mt-4';
+                const mDiv = document.createElement('div'); 
+                mDiv.className = 'month-container mt-2 sm:mt-4';
                 const monthName = document.getElementById('startMonth').options[m].text;
                 mDiv.innerHTML = `<h2 class="calendar-title font-bold text-center text-slate-800 mb-3 sm:mb-6 uppercase text-sm sm:text-lg">Escala de ${monthName} de ${yr}</h2>`;
                 
@@ -420,7 +423,8 @@
                     cell.innerHTML = html; 
                     grid.appendChild(cell);
                 }
-                mDiv.appendChild(grid); cont.appendChild(mDiv);
+                mDiv.appendChild(grid); 
+                cont.appendChild(mDiv);
             }
         }
 
@@ -449,6 +453,11 @@
         function setupEventListeners() {
             document.getElementById('logout-button').onclick = () => location.reload();
             document.getElementById('printButton').onclick = () => window.print();
+
+            // Filtros Dinâmicos (Sem regerar dados)
+            document.getElementById('startMonth').onchange = () => renderCalendars();
+            document.getElementById('endMonth').onchange = () => renderCalendars();
+            document.getElementById('year').onchange = () => renderCalendars();
 
             document.getElementById('clear-all-button').onclick = () => {
                 if(confirm("ATENÇÃO: Isso apagará permanentemente toda a escala na NUVEM. Continuar?")) {
@@ -500,15 +509,13 @@
                             schedule = data.schedule || {};
                             scheduleHistory = data.scheduleHistory || [];
                             adminPassword = data.adminPassword || adminPassword;
-                            
                             renderCalendars(); 
                             await salvarDadosFirebase();
-                            alert("Backup importado e salvo na nuvem com sucesso!");
+                            alert("Backup importado com sucesso!");
                         }
                     } catch(err) {
                         alert("Erro ao ler o arquivo JSON.");
                     }
-                    e.target.value = ''; 
                 };
                 fr.readAsText(file);
             };
@@ -517,7 +524,7 @@
                 document.getElementById('day-action-modal').style.display='none'; 
                 swapState = { mode: 'team', firstDate: currentSelectedDate };
                 document.getElementById('swap-info').classList.remove('hidden'); 
-                document.getElementById('swap-message').textContent = "Modo Troca Ativado. Clique na data de destino para inverter os plantonistas.";
+                document.getElementById('swap-message').textContent = "Modo Troca Ativado. Clique na data de destino.";
             };
             
             document.getElementById('cancelSwapButton').onclick = () => {
@@ -529,14 +536,14 @@
                 document.getElementById('day-action-modal').style.display='none';
                 const all = [...new Set(teams.flatMap(t => t.split(' - ')))];
                 document.getElementById('selection-title').textContent = "Adicionar Colaborador";
-                document.getElementById('selection-list').innerHTML = all.map(c => `<button onclick="window.confirmAction('add', '${c}')" class="w-full text-left p-3 border rounded hover:bg-green-50 font-bold transition-colors">＋ ${c}</button>`).join('');
+                document.getElementById('selection-list').innerHTML = all.map(c => `<button onclick="window.confirmAction('add', '${c}')" class="w-full text-left p-3 border rounded hover:bg-green-50 font-bold">＋ ${c}</button>`).join('');
                 document.getElementById('selection-modal').style.display='flex';
             };
 
             document.getElementById('action-replace-team-button').onclick = () => {
                 document.getElementById('day-action-modal').style.display='none';
                 document.getElementById('selection-title').textContent = "Substituir Dupla";
-                document.getElementById('selection-list').innerHTML = teams.map(t => `<button onclick="window.confirmAction('replace', '${t}')" class="w-full text-left p-3 border rounded hover:bg-purple-50 font-bold transition-colors">🔁 ${t}</button>`).join('');
+                document.getElementById('selection-list').innerHTML = teams.map(t => `<button onclick="window.confirmAction('replace', '${t}')" class="w-full text-left p-3 border rounded hover:bg-purple-50 font-bold">🔁 ${t}</button>`).join('');
                 document.getElementById('selection-modal').style.display='flex';
             };
 
@@ -544,7 +551,7 @@
                 document.getElementById('day-action-modal').style.display='none';
                 const cur = schedule[currentSelectedDate]?.team || [];
                 document.getElementById('selection-title').textContent = "Remover do Plantão";
-                document.getElementById('selection-list').innerHTML = cur.map(c => `<button onclick="window.confirmAction('remove', '${c}')" class="w-full text-left p-3 border rounded hover:bg-red-50 text-red-600 font-bold transition-colors">✖ ${c}</button>`).join('');
+                document.getElementById('selection-list').innerHTML = cur.map(c => `<button onclick="window.confirmAction('remove', '${c}')" class="w-full text-left p-3 border rounded hover:bg-red-50 text-red-600 font-bold">✖ ${c}</button>`).join('');
                 document.getElementById('selection-modal').style.display='flex';
             };
 
